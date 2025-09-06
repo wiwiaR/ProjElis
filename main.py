@@ -1,49 +1,130 @@
 from tkinter import *
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from tkinter import filedialog
 import requests
 import pandas as pd
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 janela = Tk()
-tabela = pd.DataFrame()
+tabela = None
+
+def adicionar_meses(data_string, meses):
+    try:
+        data = datetime.strptime(data_string, "%Y-%m-%d")
+        nova_data = data + relativedelta(months=meses)
+        return nova_data.strftime("%Y-%m-%d")
+    except ValueError:
+        print(f"Data inválida: {data_string}")
+        return data_string
+    except Exception as e:
+        print(f"Erro ao processar data: {e}")
+        return data_string
+
+def ajustar_datas_pagamentos(dados_ordenados, meses_para_adicionar):
+    dados_ajustados = []
+
+    for pagamento in dados_ordenados:
+        # Cria uma cópia do dicionário para não modificar o original
+        novo_pagamento = pagamento.copy()
+
+        # Ajusta a data
+        nova_data = adicionar_meses(pagamento['dueDate'], meses_para_adicionar)
+        novo_pagamento['dueDate'] = nova_data
+        novo_pagamento['meses_adicionados'] = meses_para_adicionar
+
+        dados_ajustados.append(novo_pagamento)
+
+    return dados_ajustados
 
 
-def select_file():
+def select_file(callback=None):
+    global tabela
     filename = filedialog.askopenfilename(title="Selecionar Arquivo",
                                           filetypes=(("Planilhas", "*.csv"),
                                                      ("Excel", "*.xlsx"),))
-    nome_arquivo.set(filename)
-    file = open(filename, 'r')
-    print(file.read())
-    file.close()
-
-    tabela = pd.read_csv(filename)
+    if filename:
+        try:
+            tabela = pd.read_csv(filename)
+            print(f"Arquivo {filename} carregado com sucesso!")
+            # Chama a função callback passando a tabela
+            if callback:
+                callback(tabela)
+            return tabela
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao ler o arquivo: {e}")
+    return None
 
 
 
 
 def post_pagamento():
-    for linha in tabela.index:
+    global tabela
+    for index, row in tabela.iterrows():
         url = "https://api.asaas.com/v3/payments"
 
         payload = {
             "billingType": "UNDEFINED",
-            "installmentCount": str(tabela.loc[linha, "installmentCount"]),
-            "customer": str(tabela.loc[linha, "customer"]),
-            "value": tabela.loc[linha, "value"],
-            "dueDate": str(tabela.loc[linha, "dueDate"]),
-            "description": str(tabela.loc[linha, "description"]),
+            "installmentCount": int(row["installmentCount"]),
+            "customer": str(row["customer"]),
+            "installmentValue": float(row["value"]),
+            "dueDate": str(row["dueDate"]),
+            "description": str(row["description"]),
         }
 
         headers = {
             "accept": "application/json",
             "content-type": "application/json",
-            "access_token": "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjI0ZTcyOWZlLWRhNzktNDRlZi04MzhjLWJhMGZmMDZmMDY5OTo6JGFhY2hfYjRmNmYwZTMtNjExMC00MjVhLWJhNzMtZTAwMmYwZDFhYTcz"
+            "access_token": "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmI2MDI4NWI5LWQ4ZTAtNDZjYS1iOWY3LWM2NmI0NzhhYzU5Mjo6JGFhY2hfMjVhNDNiMDMtYjI3OC00MzVhLWEyOTAtYzI4MWE0NmRlYmIx"
         }
 
-        response = requests.post(url, json=payload, headers=headers)
+        try:
+            response = requests.post(url, json=payload, headers=headers)
 
-        print(response.text)
+            if response.status_code == 200:
+                print(f"✅ Pagamento {index} enviado com sucesso!")
+                id_parcela = response.json().get("installment")
+                getCobrancasDoParcelamento(id_parcela)
+            else:
+                print(f"❌ Erro no pagamento {index}: {response.status_code}, mensagem {response.text}")
+
+        except Exception as e:
+            print(f"❌ Exception no pagamento {index}: {e}")
+
+def getCobrancasDoParcelamento(id_parcela):
+    url = "https://api.asaas.com/v3/installments/" + str(id_parcela) + "/payments"
+    headers = {
+        "accept": "application/json",
+        "access_token": "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmI2MDI4NWI5LWQ4ZTAtNDZjYS1iOWY3LWM2NmI0NzhhYzU5Mjo6JGFhY2hfMjVhNDNiMDMtYjI3OC00MzVhLWEyOTAtYzI4MWE0NmRlYmIx"
+    }
+    try:
+        response = requests.get(url, headers=headers)
+
+        if response.status_code == 200:
+            extrair_dados_pagamentos(response.json())
+        else:
+            print("babou")
+    except Exception as e:
+        print(f"Falhou: {e}")
+
+
+def extrair_dados_pagamentos(response_data):
+    dados_extraidos = []
+
+    if 'data' in response_data and isinstance(response_data['data'], list):
+        for pagamento in response_data['data']:
+            dados = {
+                'id': pagamento.get('id'),
+                'dueDate': pagamento.get('dueDate'),
+                'installmentNumber': pagamento.get('installmentNumber')
+            }
+            dados_extraidos.append(dados)
+
+    dados_ordenados = sorted(dados_extraidos, key=lambda x: x['installmentNumber'])
+    dados_ajustados = ajustar_datas_pagamentos(dados_ordenados, 3)
+
+
+    return dados_extraidos
 
 def verifica_check():
     if checkvar.get():
