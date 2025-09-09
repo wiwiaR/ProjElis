@@ -3,39 +3,10 @@ from tkinter import ttk, messagebox
 from tkinter import filedialog
 import requests
 import pandas as pd
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
+from misc import *
 
 janela = Tk()
 tabela = None
-
-def adicionar_meses(data_string, meses):
-    try:
-        data = datetime.strptime(data_string, "%Y-%m-%d")
-        nova_data = data + relativedelta(months=meses)
-        return nova_data.strftime("%Y-%m-%d")
-    except ValueError:
-        print(f"Data inválida: {data_string}")
-        return data_string
-    except Exception as e:
-        print(f"Erro ao processar data: {e}")
-        return data_string
-
-def ajustar_datas_pagamentos(dados_ordenados, meses_para_adicionar):
-    dados_ajustados = []
-
-    for pagamento in dados_ordenados:
-        # Cria uma cópia do dicionário para não modificar o original
-        novo_pagamento = pagamento.copy()
-
-        # Ajusta a data
-        nova_data = adicionar_meses(pagamento['dueDate'], meses_para_adicionar)
-        novo_pagamento['dueDate'] = nova_data
-        novo_pagamento['meses_adicionados'] = meses_para_adicionar
-
-        dados_ajustados.append(novo_pagamento)
-
-    return dados_ajustados
 
 
 def select_file(callback=None):
@@ -47,15 +18,12 @@ def select_file(callback=None):
         try:
             tabela = pd.read_csv(filename)
             print(f"Arquivo {filename} carregado com sucesso!")
-            # Chama a função callback passando a tabela
             if callback:
                 callback(tabela)
             return tabela
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao ler o arquivo: {e}")
     return None
-
-
 
 
 def post_pagamento():
@@ -75,7 +43,7 @@ def post_pagamento():
         headers = {
             "accept": "application/json",
             "content-type": "application/json",
-            "access_token": "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmI2MDI4NWI5LWQ4ZTAtNDZjYS1iOWY3LWM2NmI0NzhhYzU5Mjo6JGFhY2hfMjVhNDNiMDMtYjI3OC00MzVhLWEyOTAtYzI4MWE0NmRlYmIx"
+            "access_token": "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjBmMmEzYzFhLTMxM2YtNDFlZC1hMDRlLTdmYjg5ZDc5MTNkNTo6JGFhY2hfNmQzYWRjNTAtNDJiNi00NzVmLWIxMGItYjYxMmNjMjVkNWQw"
         }
 
         try:
@@ -91,40 +59,50 @@ def post_pagamento():
         except Exception as e:
             print(f"❌ Exception no pagamento {index}: {e}")
 
+def putVencimentoCobranca(dados_pagamento):
+    for key, value in dados_pagamento.items:
+        url = "https://api.asaas.com/v3/payments/" + str(pagamento["id"])
+        payload = {
+            "billingType": "BOLETO",
+            "value": float(pagamento["paymentValue"]),
+            "dueDate": str(pagamento["dueDate"]),
+        }
+        headers = {
+            "accept": "application/json",
+            "content-type": "application/json",
+            "access_token": "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjBmMmEzYzFhLTMxM2YtNDFlZC1hMDRlLTdmYjg5ZDc5MTNkNTo6JGFhY2hfNmQzYWRjNTAtNDJiNi00NzVmLWIxMGItYjYxMmNjMjVkNWQw"
+        }
+
+        try:
+            response = requests.put(url, json=payload, headers=headers)
+
+            if response.status_code == 200:
+                print(f"✅ Vencimento {dados_pagamento.index} atualizado com sucesso!")
+            else:
+                print(f"❌ Erro na atualização do vencimento {dados_pagamento.index}: {response.status_code}, mensagem {response.text}")
+        except Exception as e:
+            print(f"❌ Exception no vencimento {dados_pagamento.index}: {e}")
+
+
 def getCobrancasDoParcelamento(id_parcela):
     url = "https://api.asaas.com/v3/installments/" + str(id_parcela) + "/payments"
     headers = {
         "accept": "application/json",
-        "access_token": "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmI2MDI4NWI5LWQ4ZTAtNDZjYS1iOWY3LWM2NmI0NzhhYzU5Mjo6JGFhY2hfMjVhNDNiMDMtYjI3OC00MzVhLWEyOTAtYzI4MWE0NmRlYmIx"
+        "access_token": "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjBmMmEzYzFhLTMxM2YtNDFlZC1hMDRlLTdmYjg5ZDc5MTNkNTo6JGFhY2hfNmQzYWRjNTAtNDJiNi00NzVmLWIxMGItYjYxMmNjMjVkNWQw"
     }
     try:
         response = requests.get(url, headers=headers)
 
         if response.status_code == 200:
-            extrair_dados_pagamentos(response.json())
+            dados_pagamento = response.json()
+            extrair_dados_pagamentos(dados_pagamento)
+            putVencimentoCobranca(dados_pagamento)
         else:
             print("babou")
     except Exception as e:
         print(f"Falhou: {e}")
 
 
-def extrair_dados_pagamentos(response_data):
-    dados_extraidos = []
-
-    if 'data' in response_data and isinstance(response_data['data'], list):
-        for pagamento in response_data['data']:
-            dados = {
-                'id': pagamento.get('id'),
-                'dueDate': pagamento.get('dueDate'),
-                'installmentNumber': pagamento.get('installmentNumber')
-            }
-            dados_extraidos.append(dados)
-
-    dados_ordenados = sorted(dados_extraidos, key=lambda x: x['installmentNumber'])
-    dados_ajustados = ajustar_datas_pagamentos(dados_ordenados, 3)
-
-
-    return dados_extraidos
 
 def verifica_check():
     if checkvar.get():
