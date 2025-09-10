@@ -8,7 +8,7 @@ from misc import *
 janela = Tk()
 tabela = None
 dict_clientes = None
-
+btnEnviar = None
 
 def select_file(callback=None):
     global tabela, dict_clientes
@@ -20,6 +20,7 @@ def select_file(callback=None):
             getClientes()
 
             tabela = pd.read_csv(filename)
+            btnEnviar.config(state=NORMAL)
 
             tabela['customer'] = tabela['customer'].replace(dict_clientes)
             print(f"Arquivo {filename} carregado com sucesso!")
@@ -126,7 +127,6 @@ def getClientes():
         print(f"❌ Exception no get: {e}")
 
 
-
 def verifica_check():
     if checkvar.get():
         spin.config(state=NORMAL)
@@ -142,9 +142,11 @@ janela.title("Super Pagador 2000")
 frm = ttk.Frame(janela, padding=100)
 frm.grid()
 ttk.Label(frm, textvariable=nome_arquivo).grid(column=0, row=0)
-ttk.Button(frm, text="Selecionar", command=select_file).grid(column=0, row=1)
-ttk.Button(frm, text="Enviar", command=post_pagamento).grid(column=0, row=2)
-ttk.Checkbutton(frm, text="Alterar intervalo da data de vencimento", variable=checkvar, command=verifica_check).grid(column=1, row=3)
+btnSelecionar = Button(frm, text="Selecionar", command=select_file, state=NORMAL)
+btnSelecionar.grid(column=0, row=1)
+btnEnviar = Button(frm, text="Enviar", command=post_pagamento, state=DISABLED)
+btnEnviar.grid(column=1, row=1)
+ttk.Checkbutton(frm, text="Alterar intervalo da data de vencimento", variable=checkvar, command=verifica_check).grid(column=0, row=4)
 
 spin = Spinbox(frm, from_=0, to=12, increment=1, state="disabled")
 spin.grid(column=0, row=3)
