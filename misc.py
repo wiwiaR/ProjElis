@@ -40,7 +40,7 @@ def extrair_dados_pagamentos(response_data):
                 'id': pagamento.get('id'),
                 'dueDate': pagamento.get('dueDate'),
                 'installmentNumber': pagamento.get('installmentNumber'),
-                'paymentValue': pagamento.get('paymentValue'),
+                'paymentValue': pagamento.get('value'),
             }
             dados_extraidos.append(dados)
 

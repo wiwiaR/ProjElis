@@ -32,7 +32,7 @@ def post_pagamento():
         url = "https://api.asaas.com/v3/payments"
 
         payload = {
-            "billingType": "UNDEFINED",
+            "billingType": "BOLETO",
             "installmentCount": int(row["installmentCount"]),
             "customer": str(row["customer"]),
             "installmentValue": float(row["value"]),
@@ -60,7 +60,7 @@ def post_pagamento():
             print(f"❌ Exception no pagamento {index}: {e}")
 
 def putVencimentoCobranca(dados_pagamento):
-    for key, value in dados_pagamento.items:
+    for pagamento in dados_pagamento:
         url = "https://api.asaas.com/v3/payments/" + str(pagamento["id"])
         payload = {
             "billingType": "BOLETO",
@@ -95,8 +95,8 @@ def getCobrancasDoParcelamento(id_parcela):
 
         if response.status_code == 200:
             dados_pagamento = response.json()
-            extrair_dados_pagamentos(dados_pagamento)
-            putVencimentoCobranca(dados_pagamento)
+            dados_corrigidos = extrair_dados_pagamentos(dados_pagamento)
+            putVencimentoCobranca(dados_corrigidos)
         else:
             print("babou")
     except Exception as e:
