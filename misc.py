@@ -48,3 +48,17 @@ def extrair_dados_pagamentos(response_data):
     dados_ajustados = ajustar_datas_pagamentos(dados_ordenados, 3)
 
     return dados_ajustados
+
+def extrair_clientes_por_nome(response_data):
+    clientes_por_nome = {}
+
+    for cliente in response_data.get('data', []):
+        nome = cliente.get('name')
+        id_cliente = cliente.get('id')
+
+        if nome and id_cliente:
+            clientes_por_nome[nome] = id_cliente
+
+    return clientes_por_nome
+
+

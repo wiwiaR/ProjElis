@@ -7,16 +7,21 @@ from misc import *
 
 janela = Tk()
 tabela = None
+dict_clientes = None
 
 
 def select_file(callback=None):
-    global tabela
+    global tabela, dict_clientes
     filename = filedialog.askopenfilename(title="Selecionar Arquivo",
                                           filetypes=(("Planilhas", "*.csv"),
                                                      ("Excel", "*.xlsx"),))
     if filename:
         try:
+            getClientes()
+
             tabela = pd.read_csv(filename)
+
+            tabela['customer'] = tabela['customer'].replace(dict_clientes)
             print(f"Arquivo {filename} carregado com sucesso!")
             if callback:
                 callback(tabela)
@@ -101,6 +106,24 @@ def getCobrancasDoParcelamento(id_parcela):
             print("babou")
     except Exception as e:
         print(f"Falhou: {e}")
+
+def getClientes():
+    global dict_clientes
+    url = "https://api.asaas.com/v3/customers"
+    headers = {
+        "accept": "application/json",
+        "access_token": "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjBmMmEzYzFhLTMxM2YtNDFlZC1hMDRlLTdmYjg5ZDc5MTNkNTo6JGFhY2hfNmQzYWRjNTAtNDJiNi00NzVmLWIxMGItYjYxMmNjMjVkNWQw"
+    }
+    try:
+        response = requests.get(url, headers=headers)
+
+        if response.status_code == 200:
+            dict_clientes = extrair_clientes_por_nome(response.json())
+            print("Get clientes executado com sucesso!")
+        else:
+            print(f"❌ Erro no get clientes: {response.status_code}, mensagem {response.text}")
+    except Exception as e:
+        print(f"❌ Exception no get: {e}")
 
 
 
