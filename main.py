@@ -9,6 +9,8 @@ janela = Tk()
 tabela = None
 dict_clientes = None
 btnEnviar = None
+edtMeses = None
+chkAlteraVencimento = False
 
 def select_file(callback=None):
     global tabela, dict_clientes
@@ -57,8 +59,9 @@ def post_pagamento():
 
             if response.status_code == 200:
                 print(f"✅ Pagamento {index} enviado com sucesso!")
-                id_parcela = response.json().get("installment")
-                getCobrancasDoParcelamento(id_parcela)
+                if chkAlteraVencimento:
+                    id_parcela = response.json().get("installment")
+                    getCobrancasDoParcelamento(id_parcela)
             else:
                 print(f"❌ Erro no pagamento {index}: {response.status_code}, mensagem {response.text}")
 
@@ -101,7 +104,7 @@ def getCobrancasDoParcelamento(id_parcela):
 
         if response.status_code == 200:
             dados_pagamento = response.json()
-            dados_corrigidos = extrair_dados_pagamentos(dados_pagamento)
+            dados_corrigidos = extrair_dados_pagamentos(dados_pagamento, edtMeses.get())
             putVencimentoCobranca(dados_corrigidos)
         else:
             print("babou")
@@ -128,10 +131,13 @@ def getClientes():
 
 
 def verifica_check():
+    global chkAlteraVencimento
     if checkvar.get():
-        spin.config(state=NORMAL)
+        edtMeses.config(state=NORMAL)
+        chkAlteraVencimento = True
     else:
-        spin.config(state=DISABLED)
+        edtMeses.config(state=DISABLED)
+        chkAlteraVencimento = False
 
 nome_arquivo = StringVar(value='Arquivo')
 checkvar = IntVar()
@@ -148,8 +154,8 @@ btnEnviar = Button(frm, text="Enviar", command=post_pagamento, state=DISABLED)
 btnEnviar.grid(column=1, row=1)
 ttk.Checkbutton(frm, text="Alterar intervalo da data de vencimento", variable=checkvar, command=verifica_check).grid(column=0, row=4)
 
-spin = Spinbox(frm, from_=0, to=12, increment=1, state="disabled")
-spin.grid(column=0, row=3)
+edtMeses = Spinbox(frm, from_=0, to=12, increment=1, state="disabled")
+edtMeses.grid(column=0, row=3)
 
 
 if __name__ == '__main__':

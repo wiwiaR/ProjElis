@@ -31,7 +31,7 @@ def ajustar_datas_pagamentos(dados_ordenados, meses_para_adicionar):
 
     return dados_ajustados
 
-def extrair_dados_pagamentos(response_data):
+def extrair_dados_pagamentos(response_data, meses_para_adicionar):
     dados_extraidos = []
 
     if 'data' in response_data and isinstance(response_data['data'], list):
@@ -45,7 +45,7 @@ def extrair_dados_pagamentos(response_data):
             dados_extraidos.append(dados)
 
     dados_ordenados = sorted(dados_extraidos, key=lambda x: x['installmentNumber'])
-    dados_ajustados = ajustar_datas_pagamentos(dados_ordenados, 3)
+    dados_ajustados = ajustar_datas_pagamentos(dados_ordenados, meses_para_adicionar)
 
     return dados_ajustados
 
