@@ -1,9 +1,11 @@
 from tkinter import *
 from tkinter import ttk, messagebox
 from tkinter import filedialog
-import requests
+import requests, json
 import pandas as pd
 from misc import *
+
+accessToken = '$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6Ojc3MDYyYWY3LTYzNzYtNGI5Yi1hNDg1LTJmMjgyN2JhNWJhODo6JGFhY2hfMTZiMDBhYzYtYjdlOC00MjQyLTg3NTQtODU4ZDI4YzNhMTlh';
 
 janela = Tk()
 tabela = None
@@ -11,9 +13,12 @@ dict_clientes = None
 btnEnviar = None
 edtMeses = None
 chkAlteraVencimento = False
+nome_arquivo = StringVar(value='Arquivo')
+qtd_arquivos = StringVar(value=' ')
+alert = StringVar(value='')
 
 def select_file(callback=None):
-    global tabela, dict_clientes
+    global tabela, dict_clientes, nome_arquivo
     filename = filedialog.askopenfilename(title="Selecionar Arquivo",
                                           filetypes=(("Planilhas", "*.csv"),
                                                      ("Excel", "*.xlsx"),))
@@ -22,6 +27,8 @@ def select_file(callback=None):
             getClientes()
 
             tabela = pd.read_csv(filename)
+            nome_arquivo.set(filename)
+            qtd_arquivos.set(f"{len(tabela)} Pagamentos")
             btnEnviar.config(state=NORMAL)
 
             tabela['customer'] = tabela['customer'].replace(dict_clientes)
@@ -51,7 +58,7 @@ def post_pagamento():
         headers = {
             "accept": "application/json",
             "content-type": "application/json",
-            "access_token": "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjBmMmEzYzFhLTMxM2YtNDFlZC1hMDRlLTdmYjg5ZDc5MTNkNTo6JGFhY2hfNmQzYWRjNTAtNDJiNi00NzVmLWIxMGItYjYxMmNjMjVkNWQw"
+            "access_token": accessToken
         }
 
         try:
@@ -63,10 +70,14 @@ def post_pagamento():
                     id_parcela = response.json().get("installment")
                     getCobrancasDoParcelamento(id_parcela)
             else:
+                error_data = json.loads(response.text)
+                descricao_erro = error_data['errors'][0]['description']
+                alert.set(alert.get() + f"Pagamento {index}: {descricao_erro}\n")
                 print(f"❌ Erro no pagamento {index}: {response.status_code}, mensagem {response.text}")
 
         except Exception as e:
             print(f"❌ Exception no pagamento {index}: {e}")
+
 
 def putVencimentoCobranca(dados_pagamento):
     for pagamento in dados_pagamento:
@@ -79,7 +90,7 @@ def putVencimentoCobranca(dados_pagamento):
         headers = {
             "accept": "application/json",
             "content-type": "application/json",
-            "access_token": "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjBmMmEzYzFhLTMxM2YtNDFlZC1hMDRlLTdmYjg5ZDc5MTNkNTo6JGFhY2hfNmQzYWRjNTAtNDJiNi00NzVmLWIxMGItYjYxMmNjMjVkNWQw"
+            "access_token": accessToken
         }
 
         try:
@@ -97,7 +108,7 @@ def getCobrancasDoParcelamento(id_parcela):
     url = "https://api.asaas.com/v3/installments/" + str(id_parcela) + "/payments"
     headers = {
         "accept": "application/json",
-        "access_token": "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjBmMmEzYzFhLTMxM2YtNDFlZC1hMDRlLTdmYjg5ZDc5MTNkNTo6JGFhY2hfNmQzYWRjNTAtNDJiNi00NzVmLWIxMGItYjYxMmNjMjVkNWQw"
+        "access_token": accessToken
     }
     try:
         response = requests.get(url, headers=headers)
@@ -116,7 +127,7 @@ def getClientes():
     url = "https://api.asaas.com/v3/customers"
     headers = {
         "accept": "application/json",
-        "access_token": "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjBmMmEzYzFhLTMxM2YtNDFlZC1hMDRlLTdmYjg5ZDc5MTNkNTo6JGFhY2hfNmQzYWRjNTAtNDJiNi00NzVmLWIxMGItYjYxMmNjMjVkNWQw"
+        "access_token": accessToken
     }
     try:
         response = requests.get(url, headers=headers)
@@ -139,7 +150,7 @@ def verifica_check():
         edtMeses.config(state=DISABLED)
         chkAlteraVencimento = False
 
-nome_arquivo = StringVar(value='Arquivo')
+
 checkvar = IntVar()
 checkvar.set(0)
 
@@ -147,15 +158,25 @@ checkvar.set(0)
 janela.title("Super Pagador 2000")
 frm = ttk.Frame(janela, padding=100)
 frm.grid()
-ttk.Label(frm, textvariable=nome_arquivo).grid(column=0, row=0)
+
+ttk.Label(frm, textvariable=nome_arquivo).grid(column=0, row=0, columnspan=3)
+ttk.Label(frm, textvariable=qtd_arquivos).grid(column=0, row=1, columnspan=3)
+
 btnSelecionar = Button(frm, text="Selecionar", command=select_file, state=NORMAL)
-btnSelecionar.grid(column=0, row=1)
+btnSelecionar.grid(column=0, row=3)
+
 btnEnviar = Button(frm, text="Enviar", command=post_pagamento, state=DISABLED)
-btnEnviar.grid(column=1, row=1)
-ttk.Checkbutton(frm, text="Alterar intervalo da data de vencimento", variable=checkvar, command=verifica_check).grid(column=0, row=4)
+btnEnviar.grid(column=2, row=3)
+
+ttk.Label(frm, text=" ").grid(column=0, row=4, columnspan=3)
+
+ttk.Checkbutton(frm, text="Alterar intervalo da data de vencimento",
+                variable=checkvar, command=verifica_check).grid(column=0, row=5, columnspan=3)
 
 edtMeses = Spinbox(frm, from_=0, to=12, increment=1, state="disabled")
-edtMeses.grid(column=0, row=3)
+edtMeses.grid(column=0, row=6, columnspan=3)
+
+ttk.Label(frm, textvariable=alert).grid(column=0, row=7, columnspan=3)
 
 
 if __name__ == '__main__':
