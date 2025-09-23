@@ -5,13 +5,14 @@ import requests, json
 import pandas as pd
 from misc import *
 
-accessToken = '$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6Ojc3MDYyYWY3LTYzNzYtNGI5Yi1hNDg1LTJmMjgyN2JhNWJhODo6JGFhY2hfMTZiMDBhYzYtYjdlOC00MjQyLTg3NTQtODU4ZDI4YzNhMTlh';
+accessToken = '$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6Ojc0N2JlMDUzLWI0MmEtNDExZi1iOGVjLWY4NDhmODg3MTVlNTo6JGFhY2hfZjdjODA4NDUtMjI4ZS00MTFmLWEzMmEtZWUyYjgxNDZhYTI3';
 
 janela = Tk()
 tabela = None
 dict_clientes = None
 btnEnviar = None
 edtMeses = None
+#gauge = None
 chkAlteraVencimento = False
 nome_arquivo = StringVar(value='Arquivo')
 qtd_arquivos = StringVar(value=' ')
@@ -31,7 +32,7 @@ def select_file(callback=None):
             qtd_arquivos.set(f"{len(tabela)} Pagamentos")
             btnEnviar.config(state=NORMAL)
 
-            tabela['customer'] = tabela['customer'].replace(dict_clientes)
+            tabela['customer'] = tabela['customer'].map(dict_clientes)
             print(f"Arquivo {filename} carregado com sucesso!")
             if callback:
                 callback(tabela)
@@ -43,6 +44,9 @@ def select_file(callback=None):
 
 def post_pagamento():
     global tabela
+    janela.config(cursor="watch")
+    janela.update()
+    #gauge.config(maximum=len(tabela))
     for index, row in tabela.iterrows():
         url = "https://api.asaas.com/v3/payments"
 
@@ -63,7 +67,7 @@ def post_pagamento():
 
         try:
             response = requests.post(url, json=payload, headers=headers)
-
+            #gauge['value'] += 1
             if response.status_code == 200:
                 print(f"✅ Pagamento {index} enviado com sucesso!")
                 if chkAlteraVencimento:
@@ -77,7 +81,7 @@ def post_pagamento():
 
         except Exception as e:
             print(f"❌ Exception no pagamento {index}: {e}")
-
+    janela.config(cursor="")
 
 def putVencimentoCobranca(dados_pagamento):
     for pagamento in dados_pagamento:
@@ -177,6 +181,9 @@ edtMeses = Spinbox(frm, from_=0, to=12, increment=1, state="disabled")
 edtMeses.grid(column=0, row=6, columnspan=3)
 
 ttk.Label(frm, textvariable=alert).grid(column=0, row=7, columnspan=3)
+#gauge = ttk.Progressbar(frm, orient=HORIZONTAL, length=300, mode="determinate")
+#gauge.grid(column=0, row=8, columnspan=3)
+
 
 
 if __name__ == '__main__':
