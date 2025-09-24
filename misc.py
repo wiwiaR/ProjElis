@@ -4,7 +4,7 @@ from dateutil.relativedelta import relativedelta
 def adicionar_meses(data_string, meses):
     try:
         data = datetime.strptime(data_string, "%Y-%m-%d")
-        nova_data = data + relativedelta(months=meses)
+        nova_data = data + relativedelta(months=int(meses))
         return nova_data.strftime("%Y-%m-%d")
     except ValueError:
         print(f"Data inválida: {data_string}")

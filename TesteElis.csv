@@ -1,10 +1,10 @@
 customer,value,description,installmentCount,dueDate,billingType
 Walessa Mendes,3890.00,Primeira Compra,6,2025-10-05,BOLETO
 Walessa Mendes,4300.00,Jogo de Banco,3,2025-10-25,BOLETO
-Samara Ketlen Sousa de Lima,9000.00,Carro Novo,12,2025-09-07,BOLETO
-John Doe,12000.00,Muita Roupa,7,2025-09-05,BOLETO
+Samara Ketlen Sousa de Lima,859.99,Carro Novo,12,2025-09-30,BOLETO
+John Doe,1250.90,Muita Roupa,7,2025-11-05,BOLETO
 Samara Ketlen Sousa de Lima,400.00,Jaqueta Jeans,2,2025-10-03,BOLETO
 Samara Ketlen Sousa de Lima,200.00,Livros,6,2025-09-05,BOLETO
-John Doe,7800.00,PC top de linha,10,2025-10-15,BOLETO
-Walessa Mendes,3500.00,Segunda Compra,4,2025-09-10,BOLETO
-John Doe,2350.00,Comprou alguma coisa,12,2025-09-11,BOLETO
+John Doe,2000.00,PC top de linha,10,2025-10-15,BOLETO
+Walessa Mendes,2500.00,Segunda Compra,4,2025-10-10,BOLETO
+John Doe,2350.00,Comprou alguma coisa,12,2025-09-25,BOLETO

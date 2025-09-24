@@ -5,13 +5,14 @@ import requests, json
 import pandas as pd
 from misc import *
 
-accessToken = '$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6Ojc0N2JlMDUzLWI0MmEtNDExZi1iOGVjLWY4NDhmODg3MTVlNTo6JGFhY2hfZjdjODA4NDUtMjI4ZS00MTFmLWEzMmEtZWUyYjgxNDZhYTI3';
+accessToken = '$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6Ojk0ZTllMGQwLWIyNmYtNDEyNi1hYmM4LTdhOWVmYjY5ZDdiYjo6JGFhY2hfODE3NmI4ZmQtMWQzNi00MGE3LWE1ZTUtMTAzNzlkZWRjYmM5'
 
 janela = Tk()
 tabela = None
 dict_clientes = None
 btnEnviar = None
 edtMeses = None
+btnSelecionar = None
 #gauge = None
 chkAlteraVencimento = False
 nome_arquivo = StringVar(value='Arquivo')
@@ -20,6 +21,10 @@ alert = StringVar(value='')
 
 def select_file(callback=None):
     global tabela, dict_clientes, nome_arquivo
+
+    alert.set('')
+    btnSelecionar.config(text='Selecionar')
+
     filename = filedialog.askopenfilename(title="Selecionar Arquivo",
                                           filetypes=(("Planilhas", "*.csv"),
                                                      ("Excel", "*.xlsx"),))
@@ -81,7 +86,9 @@ def post_pagamento():
 
         except Exception as e:
             print(f"❌ Exception no pagamento {index}: {e}")
+
     janela.config(cursor="")
+    btnSelecionar.config(text="Novo Pagamento")
 
 def putVencimentoCobranca(dados_pagamento):
     for pagamento in dados_pagamento:
@@ -109,7 +116,7 @@ def putVencimentoCobranca(dados_pagamento):
 
 
 def getCobrancasDoParcelamento(id_parcela):
-    url = "https://api.asaas.com/v3/installments/" + str(id_parcela) + "/payments"
+    url = "https://api.asaas.com/v3/installments/" + str(id_parcela) + "/payments?limit=100"
     headers = {
         "accept": "application/json",
         "access_token": accessToken
@@ -175,12 +182,14 @@ btnEnviar.grid(column=2, row=3)
 ttk.Label(frm, text=" ").grid(column=0, row=4, columnspan=3)
 
 ttk.Checkbutton(frm, text="Alterar intervalo da data de vencimento",
-                variable=checkvar, command=verifica_check).grid(column=0, row=5, columnspan=3)
+                variable=checkvar, command=verifica_check).grid(column=0, row=6, columnspan=3)
 
 edtMeses = Spinbox(frm, from_=0, to=12, increment=1, state="disabled")
-edtMeses.grid(column=0, row=6, columnspan=3)
+edtMeses.grid(column=0, row=5, columnspan=3)
 
-ttk.Label(frm, textvariable=alert).grid(column=0, row=7, columnspan=3)
+ttk.Label(frm, text=" ").grid(column=0, row=7, columnspan=3)
+
+ttk.Label(frm, textvariable=alert).grid(column=0, row=8, columnspan=3)
 #gauge = ttk.Progressbar(frm, orient=HORIZONTAL, length=300, mode="determinate")
 #gauge.grid(column=0, row=8, columnspan=3)
 
