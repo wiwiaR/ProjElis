@@ -4,8 +4,9 @@ from tkinter import filedialog
 import requests, json
 import pandas as pd
 from misc import *
+import os
 
-accessToken = '$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6Ojk0ZTllMGQwLWIyNmYtNDEyNi1hYmM4LTdhOWVmYjY5ZDdiYjo6JGFhY2hfODE3NmI4ZmQtMWQzNi00MGE3LWE1ZTUtMTAzNzlkZWRjYmM5'
+accessToken = os.getenv("ASAAS_ERIRMARA_KEY")
 
 janela = Tk()
 tabela = None
