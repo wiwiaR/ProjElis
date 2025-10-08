@@ -4,6 +4,7 @@ from tkinter import filedialog
 import requests, json
 import pandas as pd
 from misc import *
+#from view import *
 import os
 
 accessToken = os.getenv("ASAAS_ERIRMARA_KEY")
@@ -14,11 +15,10 @@ dict_clientes = None
 btnEnviar = None
 edtMeses = None
 btnSelecionar = None
-#gauge = None
 chkAlteraVencimento = False
 nome_arquivo = StringVar(value='Arquivo')
 qtd_arquivos = StringVar(value=' ')
-alert = StringVar(value='')
+alert = StringVar(value='                                          ')
 
 def select_file(callback=None):
     global tabela, dict_clientes, nome_arquivo
@@ -73,7 +73,6 @@ def post_pagamento():
 
         try:
             response = requests.post(url, json=payload, headers=headers)
-            #gauge['value'] += 1
             if response.status_code == 200:
                 print(f"✅ Pagamento {index} enviado com sucesso!")
                 if chkAlteraVencimento:
@@ -82,7 +81,7 @@ def post_pagamento():
             else:
                 error_data = json.loads(response.text)
                 descricao_erro = error_data['errors'][0]['description']
-                alert.set(alert.get() + f"Pagamento {index}: {descricao_erro}\n")
+                alert.set(alert.get() + f"Pagamento {index + 1}: {descricao_erro}\n")
                 print(f"❌ Erro no pagamento {index}: {response.status_code}, mensagem {response.text}")
 
         except Exception as e:
@@ -168,35 +167,33 @@ checkvar.set(0)
 
 
 janela.title("Super Pagador 2000")
-frm = ttk.Frame(janela, padding=100)
+frm =  ttk.Frame(janela, padding="20")
 frm.grid()
 
-ttk.Label(frm, textvariable=nome_arquivo).grid(column=0, row=0, columnspan=3)
-ttk.Label(frm, textvariable=qtd_arquivos).grid(column=0, row=1, columnspan=3)
+btnSelecionar = ttk.Button(frm, text="Selecionar", command=select_file, state=NORMAL)
+btnSelecionar.grid(column=0, row=3, padx=(0, 13))
 
-btnSelecionar = Button(frm, text="Selecionar", command=select_file, state=NORMAL)
-btnSelecionar.grid(column=0, row=3)
+lbl_nome_arquivo = ttk.Label(frm, textvariable=nome_arquivo,
+                                     background='white', relief='sunken', padding="5", width=40)
+lbl_nome_arquivo.grid(row=3, column=1)
 
-btnEnviar = Button(frm, text="Enviar", command=post_pagamento, state=DISABLED)
-btnEnviar.grid(column=2, row=3)
+btnEnviar = ttk.Button(frm, text="Enviar", command=post_pagamento, state=DISABLED)
+btnEnviar.grid(column=0, row=11, columnspan=2)
 
-ttk.Label(frm, text=" ").grid(column=0, row=4, columnspan=3)
+ttk.Label(frm, text=" ").grid(column=0, row=4)
 
 ttk.Checkbutton(frm, text="Alterar intervalo da data de vencimento",
-                variable=checkvar, command=verifica_check).grid(column=0, row=6, columnspan=3)
+                variable=checkvar, command=verifica_check).grid(column=1, row=5)
 
-edtMeses = Spinbox(frm, from_=0, to=12, increment=1, state="disabled")
-edtMeses.grid(column=0, row=5, columnspan=3)
+edtMeses = Spinbox(frm, from_=0, to=12, increment=1, state="disabled", width=10)
+edtMeses.grid(column=0, row=5, padx=(0, 10))
 
-ttk.Label(frm, text=" ").grid(column=0, row=7, columnspan=3)
+ttk.Label(frm, text=" ").grid(column=0, row=6)
+ttk.Label(frm, text=" ").grid(column=0, row=8)
 
-ttk.Label(frm, textvariable=alert).grid(column=0, row=8, columnspan=3)
-#gauge = ttk.Progressbar(frm, orient=HORIZONTAL, length=300, mode="determinate")
-#gauge.grid(column=0, row=8, columnspan=3)
+ttk.Label(frm, textvariable=alert, background='white', relief='sunken', padding="5", width=55).grid(column=0, row=7, columnspan=2)
 
 
 
 if __name__ == '__main__':
-    janela.mainloop()
-
-
+     janela.mainloop()
